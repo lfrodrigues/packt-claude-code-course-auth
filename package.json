@@ -1,0 +1,47 @@
+{
+  "name": "auth-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev -w @auth-app/api",
+    "dev:web": "npm run dev -w @auth-app/web",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc --build --force",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --project api --project web",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "audit": "npm audit --audit-level=high",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run audit",
+    "db:generate": "npm run db:generate -w @auth-app/api",
+    "db:migrate": "npm run db:migrate -w @auth-app/api",
+    "db:auth-schema": "npm run db:auth-schema -w @auth-app/api",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.49.1",
+    "@vitest/coverage-v8": "^3.2.7",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.0",
+    "vitest": "^3.2.7"
+  }
+}

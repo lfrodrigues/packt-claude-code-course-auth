@@ -1,0 +1,39 @@
+{
+  "name": "@auth-app/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc --build",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --build",
+    "db:auth-schema": "npx --yes auth@latest generate --config src/auth.ts --output src/db/schema.ts -y",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "@auth-app/shared": "*",
+    "better-auth": "^1.6.23",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.0.1",
+    "helmet": "^8.0.0",
+    "pg": "^8.13.1",
+    "pino": "^9.6.0",
+    "pino-http": "^10.3.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/pg": "^8.11.10",
+    "@types/supertest": "^6.0.2",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.2"
+  }
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+# SLOW gate. Runs once, before code leaves your machine — the right place for the
+# things that are too slow to run on every commit.
+#
+# Requires Postgres to be up (docker compose up -d), because the tests talk to a
+# real database on purpose.
+
+npm run verify

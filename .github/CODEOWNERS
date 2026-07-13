@@ -1,0 +1,26 @@
+# The guardrail an agent cannot reach.
+#
+# .claude/settings.json is a LOCAL control: it evaporates under
+# --dangerously-skip-permissions, and it never applied to human collaborators at
+# all. CODEOWNERS lives server-side, enforced by GitHub, where neither an agent
+# nor a hurried human can switch it off.
+#
+# Requires branch protection on main: require a PR, require CI green, require
+# review from Code Owners.
+
+# The security boundary.
+/apps/api/src/auth.ts       @lfrodrigues
+/apps/api/src/routes/       @lfrodrigues
+
+# Schema and migrations are one-way doors.
+/apps/api/src/db/           @lfrodrigues
+/apps/api/drizzle/          @lfrodrigues
+
+# The gates themselves. An agent that can edit these has no gates.
+/.husky/                    @lfrodrigues
+/.github/                   @lfrodrigues
+/.claude/                   @lfrodrigues
+/.gitleaks.toml             @lfrodrigues
+
+# The contract between both apps.
+/packages/shared/           @lfrodrigues

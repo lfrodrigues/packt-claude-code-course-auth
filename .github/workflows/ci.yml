@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# CI is the backstop. Local hooks are a convenience and can be skipped with
+# --no-verify; this cannot.
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: auth
+          POSTGRES_PASSWORD: auth
+          POSTGRES_DB: auth_app
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U auth"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      BETTER_AUTH_SECRET: ci-secret-that-is-at-least-32-characters
+      BETTER_AUTH_URL: http://localhost:3005
+      DATABASE_URL: postgresql://auth:auth@localhost:5432/auth_app
+      TEST_DATABASE_URL: postgresql://auth:auth@localhost:5432/auth_app_test
+      WEB_ORIGIN: http://localhost:5173
+      PORT: 3005
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks needs history to scan it
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `npm ci`, never `npm install`: ci installs the committed lockfile exactly.
+      # `install` is free to resolve a different tree, which means CI would be
+      # validating software you never actually ran.
+      - run: npm ci
+
+      - name: Create test database
+        run: PGPASSWORD=auth psql -h localhost -U auth -d auth_app -c 'CREATE DATABASE auth_app_test;'
+
+      - name: Run migrations (both databases)
+        run: |
+          npm run db:migrate
+          DATABASE_URL="$TEST_DATABASE_URL" npm run db:migrate
+
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run audit
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - run: npm run e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

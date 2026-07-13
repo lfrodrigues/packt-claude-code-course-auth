@@ -1,0 +1,18 @@
+title = "auth-app secret scanning"
+
+[extend]
+# Start from gitleaks' full rule set (AWS keys, GitHub PATs, private keys, ...).
+useDefault = true
+
+[allowlist]
+description = "Known-safe placeholders that are supposed to be in the repo"
+paths = [
+  '''\.env\.example$''',
+  '''README\.md$''',
+]
+regexes = [
+  # The obviously-fake dev secret in .env.example and the README walkthrough.
+  '''dev-only-secret-at-least-32-chars-long''',
+  '''correct-horse-battery''',
+  '''postgresql://auth:auth@localhost''',
+]

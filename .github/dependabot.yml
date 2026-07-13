@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # An agent that can add dependencies needs a gate on what it pulls in.
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly

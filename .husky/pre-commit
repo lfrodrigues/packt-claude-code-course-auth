@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+# FAST gate. Everything here runs on every commit, so it must stay quick — a gate
+# slow enough to be annoying gets bypassed with --no-verify, and a bypassed gate
+# is worse than no gate because it sells false confidence.
+#
+# The full suite runs on pre-push, and CI is the real backstop.
+
+# 1. Secrets. This is the only irreversible mistake in this repo: once a secret is
+#    pushed, it's compromised, and rewriting history doesn't un-leak it.
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --config .gitleaks.toml || {
+    echo ""
+    echo "✖ gitleaks found a secret in your staged changes."
+    echo "  Remove it. Do NOT use --no-verify."
+    exit 1
+  }
+else
+  echo "⚠ gitleaks not installed — secret scanning SKIPPED locally (CI still runs it)."
+  echo "  brew install gitleaks"
+fi
+
+# 2. Lint + format, only on what you actually touched.
+npx lint-staged
+
+# 3. Types. Cheap, and catches the class of mistake that strict mode exists for.
+npm run typecheck

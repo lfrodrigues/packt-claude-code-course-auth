@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Secrets. .env.example is the only env file that belongs in git.
+.env
+.env.*
+!.env.example
+
+# curl cookie jars from the README walkthrough
+jar.txt
+*.tsbuildinfo
+.DS_Store

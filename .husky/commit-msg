@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+
+# Mechanizes the plan-per-commit convention.
+#
+# A convention documented in a README is a convention that erodes. This one is a
+# gate: no plan trailer, no commit. And the trailer must point at a file that
+# ACTUALLY EXISTS — otherwise you get a history full of links to plans nobody wrote.
+
+msg_file="$1"
+
+# Let merge/revert commits through: their messages are generated, not authored.
+head -n1 "$msg_file" | grep -qE '^(Merge|Revert)' && exit 0
+
+trailer=$(grep -E '^Plan:[[:space:]]*' "$msg_file" | head -n1 | sed -E 's/^Plan:[[:space:]]*//')
+
+if [ -z "$trailer" ]; then
+  cat <<'EOF'
+
+✖ Missing plan trailer.
+
+  Every commit must say which plan it implements. Add a line to your commit message:
+
+      Plan: docs/plans/001-auth-login.md
+
+  Why: `git log --grep='^Plan:'` then reconstructs the reasoning behind every
+  change in this repo. A commit with no plan is a change nobody can review the
+  intent of six months from now.
+
+EOF
+  exit 1
+fi
+
+if [ ! -f "$trailer" ]; then
+  echo ""
+  echo "✖ Plan trailer points at a file that does not exist: $trailer"
+  echo "  Write the plan first, commit it, then reference it."
+  echo ""
+  exit 1
+fi
+
+exit 0
