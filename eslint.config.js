@@ -24,9 +24,28 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      // Auth code must not silently swallow rejections.
-      '@typescript-eslint/no-floating-promises': 'off',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parserOptions: {
+        projectService: {
+          // Config and test files live outside every tsconfig's `include`.
+          allowDefaultProject: [
+            '*.config.ts',
+            'apps/api/drizzle.config.ts',
+            'apps/api/tests/*.ts',
+            'e2e/*.ts',
+          ],
+        },
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      // Auth code must not silently swallow rejections.
+      '@typescript-eslint/no-floating-promises': 'error',
     },
   },
   {

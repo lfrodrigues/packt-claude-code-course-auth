@@ -1,7 +1,10 @@
+import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
 import { z } from 'zod';
 
-config({ path: new URL('../../../.env', import.meta.url).pathname });
+// fileURLToPath, not URL#pathname: pathname leaves percent-encoding in place and
+// breaks on Windows drive letters or a repo path containing spaces.
+config({ path: fileURLToPath(new URL('../../../.env', import.meta.url)) });
 
 /**
  * Env is parsed once, at boot, and throws if anything is missing or malformed.
