@@ -30,7 +30,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/pg": "^8.11.10",
-    "@types/supertest": "^6.0.2",
+    "@types/supertest": "^7.2.1",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "supertest": "^7.0.0",
