@@ -20,7 +20,7 @@ export default defineConfig({
           // alone, fails in CI" bug. Serialize.
           fileParallelism: false,
           pool: 'forks',
-          poolOptions: { forks: { singleFork: true } },
+          maxWorkers: 1,
           hookTimeout: 30_000,
           testTimeout: 30_000,
         },
