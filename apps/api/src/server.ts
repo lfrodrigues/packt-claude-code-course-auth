@@ -1,3 +1,4 @@
+import './instrument.js'; // MUST be first — installs Sentry before Express loads
 import { createApp } from './app.js';
 import { env } from './env.js';
 import { logger } from './logger.js';
