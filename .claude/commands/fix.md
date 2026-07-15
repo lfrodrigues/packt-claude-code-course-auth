@@ -1,3 +1,9 @@
+---
+description: Narrow remediation loop — smallest root-cause fix, narrowest re-check first
+argument-hint: <failure to fix>
+allowed-tools: Bash(npm run typecheck), Bash(npm run lint:*), Bash(npm test:*), Bash(npm run verify)
+---
+
 # Narrow remediation loop
 
 Failure to fix: $ARGUMENTS
