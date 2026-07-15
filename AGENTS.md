@@ -11,16 +11,19 @@ asked.
 
 ## Commands
 
-| Task           | Command              |
-| -------------- | -------------------- |
-| Run everything | `npm run dev`        |
-| Verify (gate)  | `npm run verify`     |
-| Tests          | `npm test`           |
-| E2E            | `npm run e2e`        |
-| Migrate DB     | `npm run db:migrate` |
+| Task            | Command               |
+| --------------- | --------------------- |
+| Run everything  | `npm run dev`         |
+| Verify (gate)   | `npm run verify`      |
+| Verify + E2E    | `npm run verify:full` |
+| Tests           | `npm test`            |
+| E2E             | `npm run e2e`         |
+| Auth-flow smoke | `npm run smoke`       |
+| Migrate DB      | `npm run db:migrate`  |
 
-`npm run verify` (typecheck + lint + test + audit) is the definition of green.
-Hooks and CI run exactly this — if it passes locally it passes in CI.
+`npm run verify` (typecheck + lint + format + test + audit) is the definition of
+green. Hooks and CI run exactly this — plus CI also runs the Playwright e2e
+suite, so `npm run verify:full` is what "green in CI" actually means.
 
 ## Layout
 
@@ -66,8 +69,16 @@ Do not paper over uncertainty with a plausible-looking implementation.
 ### Verify before claiming
 
 Don't say "this works" because it typechecks. Run it. `npm run verify` is the
-floor; for anything touching auth, drive the actual flow (the README's curl
-section exists for exactly this).
+floor; for anything touching auth, drive the actual flow: `npm run smoke` runs
+the README's curl walkthrough (signup → session → sign-out → sign-in) against a
+running server and fails loudly on any step.
+
+### Code search
+
+Prefer the `semble` MCP for locating code: one focused `search` query (pass the
+repo root as `repo`) returns the file and exact line; `find_related` finds
+similar code elsewhere in the repo. Fall back to grep only when semble misses.
+Agents without the MCP installed just use grep — this is advisory.
 
 ## Plans
 
