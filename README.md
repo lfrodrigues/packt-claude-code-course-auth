@@ -9,7 +9,7 @@ surface (password hashing, session cookies, rate limiting), so the guardrails ha
 something meaningful to protect — and so "the tests are green" is visibly not the
 same thing as "this is correct."
 
-**Stack:** Express 5 · React 18 (Vite) · Postgres 16 · Drizzle · Better Auth ·
+**Stack:** Express 5 · React 19 (Vite) · Postgres 16 · Drizzle · Better Auth ·
 Vitest · Playwright
 
 ---

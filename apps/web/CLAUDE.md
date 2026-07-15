@@ -1,6 +1,6 @@
 # apps/web
 
-Vite + React 18 + React Router. Better Auth React client.
+Vite + React 19 + React Router. Better Auth React client.
 
 ## Rules
 
