@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
+    },
+    "semble": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["--from", "semble[mcp]", "semble"]
+    }
+  }
+}

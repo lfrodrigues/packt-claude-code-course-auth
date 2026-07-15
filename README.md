@@ -223,6 +223,21 @@ echo 'AKIAIOSFODNN7EXAMPLE' > leak.txt && git add leak.txt && git commit -m "tes
 
 ---
 
+## MCP servers
+
+`.mcp.json` at the repo root registers MCP servers for any agent working in this
+project. Project-scoped (not `.claude/`), so they're shared and versioned rather
+than living in one person's local config.
+
+| Server   | Type                                              | Why it's here                                                                                                                                                                                                                                                   | How to use                                                                                                                                                                                              |
+| -------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sentry` | Hosted, remote MCP (`https://mcp.sentry.dev/mcp`) | Lets an agent read Sentry issues, stack traces, and run Seer autofix directly — instead of you pasting errors in by hand. See `apps/api/src/instrument.ts` for the SDK side, and `GET /api/crash` for a route that deliberately crashes to prove capture works. | Run `/mcp` in an interactive Claude Code session and authorize via OAuth in the browser (one-time; no token lives in the repo). Then ask the agent to list recent issues or investigate a specific one. |
+| `semble` | Local, stdio (`uvx semble`)                       | Fast code search across this repo (and related repos) by intent rather than exact string — `search "where sessions are validated"` finds the file and line without grepping for the right keyword first. `AGENTS.md` tells agents to prefer it over grep.       | Runs automatically once the `semble` MCP is available in your session — no separate auth step. Requires `uv`/`uvx` installed locally.                                                                   |
+
+Both are advisory conveniences, not gates — nothing in `verify` depends on them.
+
+---
+
 ## Plans live with the code
 
 Every change ships with a plan in `docs/plans/NNN-slug.md`, and the commit that
