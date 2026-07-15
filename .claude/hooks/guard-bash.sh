@@ -33,10 +33,12 @@ fi
 # git push: feature branches are allowed (permission layer asks); pushing to
 # main/master or force-pushing is never allowed.
 if echo "$cmd" | grep -qE "git[[:space:]]+push"; then
-  if echo "$cmd" | grep -qE "git[[:space:]]+push.*[[:space:]](main|master)([[:space:]]|$|:)"; then
+  # Both the branch form (`git push origin main`) and the refspec form
+  # (`git push origin HEAD:main`, `git push origin foo:master`).
+  if echo "$cmd" | grep -qE "git[[:space:]]+push.*[[:space:]:](main|master)([[:space:]]|$|:)"; then
     block "pushing to main/master is not allowed. Push a feature branch and open a PR."
   fi
-  if echo "$cmd" | grep -qE "git[[:space:]]+push.*([[:space:]]--force([[:space:]]|$)|[[:space:]]-f([[:space:]]|$))"; then
+  if echo "$cmd" | grep -qE "git[[:space:]]+push.*([[:space:]]--force(-with-lease(=[^[:space:]]*)?)?([[:space:]]|$)|[[:space:]]-f([[:space:]]|$))"; then
     block "force-push is not allowed."
   fi
   # Bare `git push` (no remote/refspec, flags only) while on main/master would

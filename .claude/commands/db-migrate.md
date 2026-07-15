@@ -1,3 +1,8 @@
+---
+description: Generate a migration from the Drizzle schema, summarize it, and apply only after confirmation
+allowed-tools: Bash(npm run db:generate)
+---
+
 # Generate and apply a database migration
 
 1. Run `npm run db:generate` to produce the migration from the current Drizzle
