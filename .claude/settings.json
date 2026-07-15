@@ -15,7 +15,10 @@
       "Edit(./apps/api/src/db/schema.ts)",
       "Edit(./package-lock.json)",
 
-      "Bash(git push:*)",
+      "Bash(git push origin main:*)",
+      "Bash(git push origin master:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
       "Bash(git commit --no-verify:*)",
       "Bash(rm -rf:*)"
     ],
@@ -24,7 +27,52 @@
       "Edit(./packages/shared/**)",
       "Bash(npm run db:migrate:*)",
       "Bash(drizzle-kit migrate:*)",
-      "Bash(docker compose down:*)"
+      "Bash(docker compose down:*)",
+      "Bash(git push:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-files.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/format-file.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/typecheck-changed.sh\"",
+            "timeout": 90
+          }
+        ]
+      }
     ]
   }
 }
