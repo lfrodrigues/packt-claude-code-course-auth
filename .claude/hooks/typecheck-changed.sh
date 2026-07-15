@@ -15,11 +15,12 @@ if command -v jq >/dev/null 2>&1; then
   [ "$stop_active" = "true" ] && exit 0
 fi
 
+# Incremental build (no --force): near-instant when little changed.
 # macOS has no `timeout` by default; fall back to an unbounded run.
 if command -v timeout >/dev/null 2>&1; then
-  out=$(timeout 60 npm run typecheck --silent 2>&1)
+  out=$(timeout 60 npm run typecheck:incremental --silent 2>&1)
 else
-  out=$(npm run typecheck --silent 2>&1)
+  out=$(npm run typecheck:incremental --silent 2>&1)
 fi
 status=$?
 

@@ -1,3 +1,9 @@
+---
+description: Verify, commit with a plan trailer, and push a feature branch
+argument-hint: <what to ship>
+allowed-tools: Bash(git status:*), Bash(git checkout -b:*), Bash(npm run verify)
+---
+
 # Create a branch and push it to GitHub
 
 What to ship: $ARGUMENTS

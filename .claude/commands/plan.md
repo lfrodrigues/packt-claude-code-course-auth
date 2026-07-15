@@ -1,3 +1,8 @@
+---
+description: Scaffold the next-numbered plan file in docs/plans/
+argument-hint: <feature-slug>
+---
+
 # Scaffold a plan file
 
 Feature slug: $ARGUMENTS
