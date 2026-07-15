@@ -23,6 +23,11 @@ const envSchema = z.object({
   TEST_DATABASE_URL: z.string().url().optional(),
 
   WEB_ORIGIN: z.string().url(),
+
+  // Optional: when unset (dev without a DSN, and every test) Sentry.init is
+  // skipped and the SDK is a no-op. Set it in .env to send errors to Sentry.
+  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_ENVIRONMENT: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
