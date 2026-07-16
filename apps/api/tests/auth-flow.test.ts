@@ -1,21 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { eq } from 'drizzle-orm';
-import { createApp } from '../src/app.js';
 import { db, schema } from '../src/db/index.js';
-
-const app = createApp();
-
-const PASSWORD = 'correct-horse-battery';
-const user = { email: 'ada@example.com', password: PASSWORD, name: 'Ada Lovelace' };
-
-/** Sign up, and hand back the session cookie for reuse. */
-async function signUp(overrides: Partial<typeof user> = {}) {
-  const res = await request(app)
-    .post('/api/auth/sign-up/email')
-    .send({ ...user, ...overrides });
-  return { res, cookie: res.headers['set-cookie'] as unknown as string[] };
-}
+import { app, user, PASSWORD, signUp } from './helpers.js';
 
 describe('sign-up', () => {
   it('creates the user and issues a session cookie', async () => {
@@ -73,6 +60,40 @@ describe('sign-up', () => {
     expect(rows).toHaveLength(0);
   });
 
+  it('rejects an invalid email server-side (shared schema, not just the browser form)', async () => {
+    const { res } = await signUp({ email: 'not-an-email' });
+
+    // The browser form validates with the shared schema too, but anything can
+    // POST to the API directly — this asserts the SERVER runs the contract.
+    expect(res.status).toBe(400);
+
+    const rows = await db.select().from(schema.user);
+    expect(rows).toHaveLength(0);
+  });
+
+  it('rejects an empty name server-side, and creates no user', async () => {
+    const { res } = await signUp({ email: 'noname@example.com', name: '   ' });
+
+    expect(res.status).toBe(400);
+
+    const rows = await db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.email, 'noname@example.com'));
+    expect(rows).toHaveLength(0);
+  });
+
+  it('normalizes the email: "  Ada@Example.COM " is stored as ada@example.com', async () => {
+    const { res } = await signUp({ email: '  Ada@Example.COM ' });
+
+    expect(res.status).toBe(200);
+
+    // The shared schema trims and lowercases; the before-hook replaces the body
+    // with the parsed output, so the normalized form is what reaches the DB.
+    const rows = await db.select().from(schema.user).where(eq(schema.user.email, user.email));
+    expect(rows).toHaveLength(1);
+  });
+
   it('rejects a duplicate email', async () => {
     await signUp();
     const { res } = await signUp();
@@ -112,33 +133,6 @@ describe('sign-in', () => {
   });
 });
 
-describe('GET /api/me', () => {
-  it('401s with no cookie', async () => {
-    const res = await request(app).get('/api/me');
-    expect(res.status).toBe(401);
-  });
-
-  it('200s with a valid cookie and returns the right user', async () => {
-    const { cookie } = await signUp();
-
-    const res = await request(app).get('/api/me').set('Cookie', cookie);
-
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ email: user.email, name: user.name });
-  });
-
-  it('401s on a TAMPERED cookie', async () => {
-    const { cookie } = await signUp();
-    const tampered = cookie.map((c) => c.replace(/session_token=[^;]+/, 'session_token=forged'));
-
-    const res = await request(app).get('/api/me').set('Cookie', tampered);
-
-    // The one that catches a route checking `cookie !== undefined` instead of
-    // verifying the signature. A happy-path test sails straight past that bug.
-    expect(res.status).toBe(401);
-  });
-});
-
 describe('sign-out', () => {
   it('invalidates the session, so the same cookie stops working', async () => {
     const { cookie } = await signUp();
@@ -150,33 +144,5 @@ describe('sign-out', () => {
     // cookie browser-side, a stolen cookie would still work forever.
     const after = await request(app).get('/api/me').set('Cookie', cookie);
     expect(after.status).toBe(401);
-  });
-});
-
-describe('rate limiting', () => {
-  it('429s the 6th rapid failed sign-in', async () => {
-    await signUp();
-
-    const statuses: number[] = [];
-    for (let i = 0; i < 6; i++) {
-      const res = await request(app)
-        .post('/api/auth/sign-in/email')
-        .send({ email: user.email, password: 'wrong' });
-      statuses.push(res.status);
-    }
-
-    // Better Auth disables rate limiting in dev by DEFAULT. This test is what
-    // stops someone "simplifying" that config back to the default and shipping
-    // an unthrottled login endpoint.
-    expect(statuses.slice(0, 5).every((s) => s !== 429)).toBe(true);
-    expect(statuses[5]).toBe(429);
-  });
-});
-
-describe('GET /healthz', () => {
-  it('reports the database is up', async () => {
-    const res = await request(app).get('/healthz');
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: 'ok', db: 'up' });
   });
 });

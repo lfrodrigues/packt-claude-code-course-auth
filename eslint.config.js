@@ -32,13 +32,10 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          // Config and test files live outside every tsconfig's `include`.
-          allowDefaultProject: [
-            '*.config.ts',
-            'apps/api/drizzle.config.ts',
-            'apps/api/tests/*.ts',
-            'e2e/*.ts',
-          ],
+          // Config and e2e files live outside every tsconfig's `include`.
+          // apps/api/tests/ outgrew this list (it caps at 8 files) and has its
+          // own tests/tsconfig.json instead.
+          allowDefaultProject: ['*.config.ts', 'apps/api/drizzle.config.ts', 'e2e/*.ts'],
         },
         tsconfigRootDir: import.meta.dirname,
       },

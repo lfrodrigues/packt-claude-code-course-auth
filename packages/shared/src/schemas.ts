@@ -31,6 +31,33 @@ export const signUpSchema = signInSchema.extend({
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
+/**
+ * Demo form on the dashboard — a second worked example of the shared contract,
+ * this time on a hand-written Express route rather than a Better Auth endpoint.
+ *
+ * `z.coerce.number()` is the interesting part: form inputs are always strings,
+ * and the schema is the single place where "42" becomes 42 — for the browser
+ * AND the server, because they run the same parse.
+ */
+export const demoFormSchema = z.object({
+  email: emailSchema,
+  amount: z.coerce
+    .number({ invalid_type_error: 'Amount must be a number.' })
+    .int('Amount must be a whole number.')
+    .min(1, 'Amount must be at least 1.')
+    .max(1000, 'Amount must be at most 1000.'),
+});
+
+export type DemoFormInput = z.infer<typeof demoFormSchema>;
+
+/** Shape returned by POST /api/demo: the payload as the server understood it. */
+export const demoResponseSchema = z.object({
+  email: z.string(),
+  amount: z.number(),
+});
+
+export type DemoResponse = z.infer<typeof demoResponseSchema>;
+
 /** Shape returned by GET /api/me. */
 export const meResponseSchema = z.object({
   id: z.string(),
