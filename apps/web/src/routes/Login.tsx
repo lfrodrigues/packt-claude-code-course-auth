@@ -20,8 +20,10 @@ export function Login() {
 
     // Validate with the SHARED schema — the same one the server enforces. The
     // browser check is a courtesy; the server's is the one that counts.
-    const schema = mode === 'sign-up' ? signUpSchema : signInSchema;
-    const parsed = schema.safeParse({ email, password, ...(mode === 'sign-up' ? { name } : {}) });
+    const parsed =
+      mode === 'sign-up'
+        ? signUpSchema.safeParse({ email, password, name })
+        : signInSchema.safeParse({ email, password });
 
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Check your details.');
@@ -30,10 +32,13 @@ export function Login() {
 
     setPending(true);
 
+    // Submit the PARSED data, not the raw state — the schema trims and
+    // lowercases the email, and sending the raw value would throw that
+    // normalization away.
     const result =
       mode === 'sign-up'
-        ? await signUp.email({ email, password, name })
-        : await signIn.email({ email, password });
+        ? await signUp.email(signUpSchema.parse({ email, password, name }))
+        : await signIn.email(signInSchema.parse({ email, password }));
 
     setPending(false);
 

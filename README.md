@@ -16,7 +16,17 @@ Vitest · Playwright
 
 ## Quickstart
 
-Prerequisites: Node (see `.nvmrc`), Docker, and `npm`.
+### Prerequisites
+
+| Tool                | Why                                                      | Install                                      |
+| ------------------- | -------------------------------------------------------- | -------------------------------------------- |
+| Node (see `.nvmrc`) | Everything                                               | `nvm install`                                |
+| Docker              | Postgres (dev + test databases)                          | https://docs.docker.com/get-docker/          |
+| gitleaks            | Pre-commit secret scan — **silently skipped if missing** | `brew install gitleaks`                      |
+| Python 3 + pipx     | Runs Semgrep in `verify:full` (same rulesets CI uses)    | `brew install pipx`                          |
+| Playwright browsers | `npm run e2e`                                            | `npx playwright install chromium` (one-time) |
+| uv                  | The `semble` MCP server (optional, advisory)             | `brew install uv`                            |
+| `gh` CLI            | The `/pr` command (optional)                             | `brew install gh`                            |
 
 ```bash
 cp .env.example .env      # dev defaults work as-is
@@ -32,16 +42,20 @@ Open http://localhost:5173, create an account, and you're signed in.
 
 ## Scripts
 
-| Command               | What it does                                                  |
-| --------------------- | ------------------------------------------------------------- |
-| `npm run dev`         | API + web, together                                           |
-| `npm run verify`      | **typecheck + lint + test + audit** — the definition of green |
-| `npm test`            | Unit/integration (API hits a real test database)              |
-| `npm run e2e`         | Playwright, real browser, full login flow                     |
-| `npm run db:migrate`  | Apply migrations                                              |
-| `npm run db:generate` | Drizzle schema → SQL migration                                |
+| Command               | What it does                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `npm run dev`         | API + web, together                                                                |
+| `npm run verify`      | **typecheck + lint + format + test + knip + audit** — the fast definition of green |
+| `npm run verify:full` | `verify` + Playwright e2e + Semgrep — exactly what CI runs                         |
+| `npm test`            | Unit/integration (API hits a real test database)                                   |
+| `npm run e2e`         | Playwright, real browser, full login flow                                          |
+| `npm run smoke`       | The curl walkthrough below, scripted, against a running server                     |
+| `npm run db:migrate`  | Apply migrations                                                                   |
+| `npm run db:generate` | Drizzle schema → SQL migration                                                     |
 
-`verify` is what the git hooks and CI both run. One definition of green, no drift.
+`verify` is what the pre-push hook runs; `verify:full` is what CI runs. One
+definition of green, no drift. (Semgrep fetches its rulesets from the registry,
+so that step needs network; pipx caches the tool itself after the first run.)
 
 ---
 
@@ -168,15 +182,15 @@ typecheck on an app that cannot work.
 The interesting half. Some of these are advice; the rest are mechanisms. **Knowing
 which is which is the whole skill.**
 
-| Guardrail                 | Kind                      | What it does                                                                                               |
-| ------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `AGENTS.md` / `CLAUDE.md` | **Advisory**              | WON'T rules + the confidence loop. Shapes behavior; guarantees nothing.                                    |
-| `.claude/settings.json`   | **Enforced**              | Blocks edits to `.env`, `.husky/`, CI, `.claude/`, generated schema. Asks before `auth.ts` and migrations. |
-| `.husky/pre-commit`       | **Enforced**              | gitleaks + lint + typecheck. Fast, so it never gets skipped.                                               |
-| `.husky/commit-msg`       | **Enforced**              | Rejects commits with no `Plan:` trailer.                                                                   |
-| `.husky/pre-push`         | **Enforced**              | Full `verify`.                                                                                             |
-| GitHub Actions            | **Enforced**              | Same `verify`, plus E2E. Catches `--no-verify`.                                                            |
-| `CODEOWNERS`              | **Enforced, server-side** | Human review required on auth, schema, and the gates.                                                      |
+| Guardrail               | Kind                      | What it does                                                                                               |
+| ----------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `CLAUDE.md`             | **Advisory**              | WON'T rules + the confidence loop. Shapes behavior; guarantees nothing.                                    |
+| `.claude/settings.json` | **Enforced**              | Blocks edits to `.env`, `.husky/`, CI, `.claude/`, generated schema. Asks before `auth.ts` and migrations. |
+| `.husky/pre-commit`     | **Enforced**              | gitleaks + lint + typecheck. Fast, so it never gets skipped.                                               |
+| `.husky/commit-msg`     | **Enforced**              | Rejects commits with no `Plan:` trailer.                                                                   |
+| `.husky/pre-push`       | **Enforced**              | Full `verify`.                                                                                             |
+| GitHub Actions          | **Enforced**              | `verify:full` (verify + e2e + Semgrep). Catches `--no-verify`.                                             |
+| `CODEOWNERS`            | **Enforced, server-side** | Human review required on auth, schema, and the gates.                                                      |
 
 Three principles hold this together:
 
@@ -197,7 +211,7 @@ Three principles hold this together:
 
 ### The confidence loop
 
-From `AGENTS.md`:
+From `CLAUDE.md`:
 
 > Before implementing, self-score your plan 1–10 on how confident you are it is
 > correct and complete. **If below 8, stop and ask** — and name specifically what
@@ -232,7 +246,7 @@ than living in one person's local config.
 | Server   | Type                                              | Why it's here                                                                                                                                                                                                                                                   | How to use                                                                                                                                                                                              |
 | -------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sentry` | Hosted, remote MCP (`https://mcp.sentry.dev/mcp`) | Lets an agent read Sentry issues, stack traces, and run Seer autofix directly — instead of you pasting errors in by hand. See `apps/api/src/instrument.ts` for the SDK side, and `GET /api/crash` for a route that deliberately crashes to prove capture works. | Run `/mcp` in an interactive Claude Code session and authorize via OAuth in the browser (one-time; no token lives in the repo). Then ask the agent to list recent issues or investigate a specific one. |
-| `semble` | Local, stdio (`uvx semble`)                       | Fast code search across this repo (and related repos) by intent rather than exact string — `search "where sessions are validated"` finds the file and line without grepping for the right keyword first. `AGENTS.md` tells agents to prefer it over grep.       | Runs automatically once the `semble` MCP is available in your session — no separate auth step. Requires `uv`/`uvx` installed locally.                                                                   |
+| `semble` | Local, stdio (`uvx --from semble[mcp] semble`)    | Fast code search across this repo (and related repos) by intent rather than exact string — `search "where sessions are validated"` finds the file and line without grepping for the right keyword first. `CLAUDE.md` tells agents to prefer it over grep.       | Runs automatically once the `semble` MCP is available in your session — no separate auth step. Requires `uv`/`uvx` installed locally.                                                                   |
 
 Both are advisory conveniences, not gates — nothing in `verify` depends on them.
 
