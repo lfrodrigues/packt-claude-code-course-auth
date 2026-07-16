@@ -61,5 +61,3 @@ export const auth = betterAuth({
   // Only these origins may drive the auth endpoints.
   trustedOrigins: [env.WEB_ORIGIN],
 });
-
-export type Auth = typeof auth;
