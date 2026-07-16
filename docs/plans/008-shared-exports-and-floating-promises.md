@@ -1,6 +1,6 @@
-# 002 — Fix shared package exports, enforce no-floating-promises, small hardening
+# 008 — Fix shared package exports, enforce no-floating-promises, small hardening
 
-## Problem
+## Context
 
 A best-practices review of the repo found:
 

@@ -9,6 +9,7 @@ import { env } from './env.js';
 import { logger } from './logger.js';
 import { errorHandler, notFoundHandler } from './error-handler.js';
 import { meRouter } from './routes/me.js';
+import { demoRouter } from './routes/demo.js';
 import { healthRouter } from './routes/health.js';
 import { debugRouter } from './routes/debug.js';
 
@@ -46,6 +47,7 @@ export function createApp(): Express {
 
   app.use('/healthz', healthRouter);
   app.use('/api/me', meRouter);
+  app.use('/api/demo', demoRouter);
 
   // Crash endpoint used only to prove Sentry captures unhandled errors. Never
   // mounted in production, so it can't be hit publicly.

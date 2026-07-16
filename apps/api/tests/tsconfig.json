@@ -1,0 +1,15 @@
+{
+  // Exists for typescript-eslint's projectService: the test files outgrew the
+  // allowDefaultProject glob (it caps at 8 files), so they get a real project.
+  // Not referenced by the root tsconfig — `npm run typecheck` doesn't use it.
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true
+  },
+  "include": ["*.ts", "../src/**/*"]
+}

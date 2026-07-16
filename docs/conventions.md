@@ -20,9 +20,11 @@ because there is only one copy of it.
 
 ## One `verify`, three callers
 
-`typecheck && lint && test && audit`, invoked identically by the pre-push hook,
-CI, and humans. One definition of green means no "works locally, fails in CI"
-drift — and no arguing about which check counts.
+`typecheck && lint && format:check && test && knip && audit`, invoked identically
+by the pre-push hook, CI, and humans. CI runs `verify:full`, which is the same
+gate plus the Playwright e2e suite and Semgrep — and it's runnable locally too,
+so "green in CI" is reproducible at your desk. One definition of green means no
+"works locally, fails in CI" drift — and no arguing about which check counts.
 
 ## Fast gate / slow gate
 

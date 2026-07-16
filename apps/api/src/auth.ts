@@ -1,8 +1,17 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { MIN_PASSWORD_LENGTH } from '@auth-app/shared';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
+import type { z } from 'zod';
+import { MIN_PASSWORD_LENGTH, signInSchema, signUpSchema } from '@auth-app/shared';
 import { db, schema } from './db/index.js';
 import { env } from './env.js';
+
+// Better Auth endpoints whose bodies are validated against the shared contract.
+// One entry per endpoint: the hook below looks the schema up by path.
+const bodySchemas: Record<string, z.ZodTypeAny> = {
+  '/sign-up/email': signUpSchema,
+  '/sign-in/email': signInSchema,
+};
 
 /**
  * The security boundary. Everything here is a decision with a blast radius.
@@ -32,6 +41,10 @@ export const auth = betterAuth({
     max: 100,
     customRules: {
       '/sign-in/email': { window: 60, max: 5 },
+      // Sign-up gets the same budget: an unthrottled sign-up endpoint invites
+      // account-creation spam and email enumeration just as much as an
+      // unthrottled sign-in invites brute force.
+      '/sign-up/email': { window: 60, max: 5 },
     },
     // Counters live in Postgres, not in process memory. Two reasons, and the
     // second is the one people miss:
@@ -51,6 +64,27 @@ export const auth = betterAuth({
     // exactly that. For an auth service, immediate revocation is worth one DB
     // read per request; only enable this if you accept delayed revocation.
     cookieCache: { enabled: false },
+  },
+
+  hooks: {
+    // The shared zod schemas are the contract, so the server must actually run
+    // them — Better Auth's own checks cover password length (via
+    // minPasswordLength above) but not the schemas' email normalization or the
+    // name rules. Parsing here also replaces the body with the parsed output,
+    // so "  Ada@Example.com " is stored as "ada@example.com" no matter what the
+    // client sends. To validate another Better Auth endpoint, add its path to
+    // the map — hand-written Express routes validate in their own handlers.
+    before: createAuthMiddleware(async (ctx) => {
+      const schema = bodySchemas[ctx.path];
+      if (!schema) return;
+      const parsed = schema.safeParse(ctx.body);
+      if (!parsed.success) {
+        throw new APIError('BAD_REQUEST', {
+          message: parsed.error.issues[0]?.message ?? 'Invalid request.',
+        });
+      }
+      return { context: { body: { ...ctx.body, ...parsed.data } } };
+    }),
   },
 
   advanced: {

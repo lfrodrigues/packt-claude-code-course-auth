@@ -1,5 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  // pipx is a system tool (runs Semgrep in verify:full), not an npm dependency.
+  "ignoreBinaries": ["pipx"],
   "workspaces": {
     ".": {
       "entry": ["scripts/*.sh"],
