@@ -1,7 +1,11 @@
+import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 
-config({ path: '../../.env' });
+// File-relative, not cwd-relative: this config is loaded both by drizzle-kit
+// (cwd apps/api) and by knip (cwd repo root), and a plain '../../.env' resolves
+// to a different place under each. Anchoring to import.meta.url is stable.
+config({ path: fileURLToPath(new URL('../../.env', import.meta.url)) });
 
 // Deliberately does NOT import src/env.ts. drizzle-kit loads this file in its own
 // bundler, and dragging the app's import graph through it causes confusing
