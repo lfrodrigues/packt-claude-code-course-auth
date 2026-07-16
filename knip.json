@@ -1,0 +1,29 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.sh"],
+      // vitest.config.ts's `projects` array sets a per-project `root`, so
+      // `setupFiles: ['./tests/setup.ts']` resolves correctly for vitest itself
+      // (apps/api/tests/setup.ts, apps/web/tests/setup.ts) but knip resolves it
+      // relative to the config file instead — a known limitation with vitest's
+      // multi-root `projects` field, not a real dead reference.
+      "ignoreUnresolved": ["\\./tests/setup\\.ts"]
+    },
+    "apps/api": {
+      "entry": ["src/app.ts", "src/instrument.ts"],
+      "project": ["src/**/*.ts"],
+      // pino-pretty is selected by string as a pino transport target, never
+      // imported — knip can't see that reference.
+      "ignoreDependencies": ["pino-pretty"]
+    },
+    "apps/web": {
+      "project": ["src/**/*.{ts,tsx}"],
+      // jsdom is selected by string as the vitest `environment`, never imported.
+      "ignoreDependencies": ["jsdom"]
+    },
+    "packages/shared": {
+      "project": ["src/**/*.ts"]
+    }
+  }
+}

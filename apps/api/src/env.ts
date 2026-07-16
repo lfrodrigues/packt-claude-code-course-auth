@@ -49,5 +49,3 @@ const databaseUrl =
   base.NODE_ENV === 'test' ? (base.TEST_DATABASE_URL ?? base.DATABASE_URL) : base.DATABASE_URL;
 
 export const env = { ...base, DATABASE_URL: databaseUrl } as const;
-
-export type Env = typeof env;
