@@ -243,12 +243,158 @@ echo 'AKIAIOSFODNN7EXAMPLE' > leak.txt && git add leak.txt && git commit -m "tes
 project. Project-scoped (not `.claude/`), so they're shared and versioned rather
 than living in one person's local config.
 
-| Server   | Type                                              | Why it's here                                                                                                                                                                                                                                                   | How to use                                                                                                                                                                                              |
-| -------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sentry` | Hosted, remote MCP (`https://mcp.sentry.dev/mcp`) | Lets an agent read Sentry issues, stack traces, and run Seer autofix directly — instead of you pasting errors in by hand. See `apps/api/src/instrument.ts` for the SDK side, and `GET /api/crash` for a route that deliberately crashes to prove capture works. | Run `/mcp` in an interactive Claude Code session and authorize via OAuth in the browser (one-time; no token lives in the repo). Then ask the agent to list recent issues or investigate a specific one. |
-| `semble` | Local, stdio (`uvx --from semble[mcp] semble`)    | Fast code search across this repo (and related repos) by intent rather than exact string — `search "where sessions are validated"` finds the file and line without grepping for the right keyword first. `CLAUDE.md` tells agents to prefer it over grep.       | Runs automatically once the `semble` MCP is available in your session — no separate auth step. Requires `uv`/`uvx` installed locally.                                                                   |
+| Server   | Type                                              | Why it's here                                                                                                                                                                                                                                                                | How to use                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sentry` | Hosted, remote MCP (`https://mcp.sentry.dev/mcp`) | Lets an agent read Sentry issues, stack traces, and run Seer autofix directly — instead of you pasting errors in by hand. See `apps/api/src/instrument.ts` for the SDK side, and `GET /api/crash` for a route that deliberately crashes to prove capture works.              | Run `/mcp` in an interactive Claude Code session and authorize via OAuth in the browser (one-time; no token lives in the repo). Then ask the agent to list recent issues or investigate a specific one.                                                                                                                                                                                         |
+| `semble` | Local, stdio (`uvx --from semble[mcp] semble`)    | Fast code search across this repo (and related repos) by intent rather than exact string — `search "where sessions are validated"` finds the file and line without grepping for the right keyword first. `CLAUDE.md` tells agents to prefer it over grep.                    | Runs automatically once the `semble` MCP is available in your session — no separate auth step. Requires `uv`/`uvx` installed locally.                                                                                                                                                                                                                                                           |
+| `neon`   | Hosted, remote MCP (`https://mcp.neon.tech/mcp`)  | Lets an agent inspect and operate the production Postgres (Neon): schemas, branches, SQL. **It can run SQL and migrations**, so it stays behind this repo's confirm-before-migrate rule — the MCP gives access, not permission. See `docs/plans/012-prod-deploy-and-mcp.md`. | Run `/mcp` and authorize via OAuth with your own Neon account (per-person; no key in the repo).                                                                                                                                                                                                                                                                                                 |
+| `render` | Hosted, remote MCP (`https://mcp.render.com/mcp`) | Lets an agent see the deployed API on Render: services, deploys, logs, metrics, env vars. Render's server exposes no destructive actions (no service/DB deletion). See `docs/plans/012-prod-deploy-and-mcp.md`.                                                              | Render's MCP doesn't do OAuth — it takes a personal API key as a Bearer header. Create one in the Render dashboard (Account Settings → API Keys), then export `RENDER_API_KEY` from your shell profile before starting Claude Code (see "Deploy to production" below for exactly where to put it — and where not to); `.mcp.json` expands `${RENDER_API_KEY}` (per-person; no key in the repo). |
 
-Both are advisory conveniences, not gates — nothing in `verify` depends on them.
+All are advisory conveniences, not gates — nothing in `verify` depends on them.
+
+---
+
+## Deploy to production (per student)
+
+Everyone deploys **their own** instance — your accounts, your keys, your infra.
+Claude Code drives the database and then _verifies_ the whole deployment
+through the Neon and Render MCPs; the two Render services themselves come from
+the `render.yaml` blueprint in one dashboard click. Full reasoning:
+`docs/plans/012-prod-deploy-and-mcp.md`.
+
+**Why not create the services via the Render MCP too?** Because it can't set the
+`/api/*` rewrite — the MCP's static-site tools take no `routes` parameter, and
+that rewrite is what makes prod same-origin. This is worth noticing rather than
+hiding: an MCP is an API surface, not magic, and the honest move is to use it
+for what it's actually good at (inspecting deploys, logs, env, schema) instead
+of contorting the architecture to fit its gaps.
+
+**Target shape:** everything on two services. API on Render (free web
+service) · Postgres on Neon (free tier; Render's free Postgres self-deletes
+after 30 days) · frontend as a Render **static site** (free, no spin-down)
+whose rewrite rule proxies `/api/*` to the API service, so prod stays
+same-origin like dev — no cookie or CORS changes. `render.yaml` describes both
+Render services, and the Render MCP can see your entire deployment.
+
+### Before class (accounts + MCP auth)
+
+1. Create free accounts: [Neon](https://neon.tech), [Render](https://render.com).
+2. Render API key: dashboard → Account Settings → API Keys. **Put the export
+   in your shell profile, not in the repo** — Claude Code expands
+   `${RENDER_API_KEY}` in `.mcp.json` from its own process environment at
+   startup, so the key must be in the environment of the shell that launches
+   it:
+
+   ```bash
+   # in ~/.zshrc (then restart Claude Code):
+   export RENDER_API_KEY="rnd_..."
+   ```
+
+   Where **not** to put it: not in the repo's `.env` (that's loaded by the API
+   server via `env.ts`, not by Claude Code — the MCP would never see it, and
+   an infra-admin key doesn't belong in app runtime config), and not in
+   `.mcp.json` itself (it's committed and shared; gitleaks would flag it —
+   the `${RENDER_API_KEY}` placeholder is the point).
+
+   The key is account-wide, so create it fresh for the workshop and revoke it
+   in the Render dashboard afterward. If you want better hygiene than a
+   plaintext dotfile, keep it in the macOS Keychain and resolve it in
+   `~/.zshrc`:
+
+   ```bash
+   # one-time store:
+   security add-generic-password -a "$USER" -s render-api-key -w "rnd_..."
+   # in ~/.zshrc:
+   export RENDER_API_KEY="$(security find-generic-password -s render-api-key -w)"
+   ```
+
+3. In Claude Code, run `/mcp` and authorize `neon` via OAuth. Confirm both
+   `neon` and `render` show as connected.
+
+### The walkthrough
+
+Expect ~20 minutes, most of it waiting on builds. Steps 4–5 are a loop you
+cannot skip: **neither service's URL exists until it is created**, and each one
+needs the other's URL. That's the deploy teaching you something real about
+circular config, not a mistake in the instructions.
+
+1. **Database** — ask Claude: _"create a Neon project and give me the pooled
+   connection string."_ Pooled means the `-pooler` host; that's what Render
+   should use.
+
+2. **Migrations** — run it once, pointed at Neon:
+
+   ```bash
+   DATABASE_URL='<your-neon-pooled-url>' npm run db:migrate
+   ```
+
+   Claude must **ask before applying** — that's the WON'T rule working, not a
+   bug. Then ask it to _"list the tables in my Neon database"_ to confirm the
+   five auth tables landed **on Neon**. Don't skip this: `drizzle.config.ts`
+   loads the repo's `.env`, so a success message alone doesn't tell you _which_
+   database you migrated. Verify where, not just whether.
+
+3. **Create both services** — Render dashboard → **New → Blueprint** → pick your
+   fork → select your branch. `render.yaml` defines the API and the static site
+   with its `/api/*` rewrite. Render prompts for each `sync: false` value, so no
+   secret is committed: paste the Neon `DATABASE_URL`, and leave
+   `BETTER_AUTH_SECRET` to be generated. `BETTER_AUTH_URL` and `WEB_ORIGIN` you
+   can't know yet — that's step 4.
+
+   Render appends a random suffix if a name is taken (`auth-app-api` →
+   `auth-app-api-lwrx`), since onrender.com subdomains are globally unique.
+   **Yours will differ from the examples here.** Ask Claude: _"list my Render
+   services and tell me both URLs."_
+
+4. **Point the API at the web origin** — ask Claude: _"set BETTER_AUTH_URL and
+   WEB_ORIGIN on my Render API service to my static site's URL."_ It does this
+   over the Render MCP and triggers a redeploy.
+
+   Both are the **static site's** URL, not the API's. Browsers reach the API
+   _through_ the rewrite, so the static site is the public origin — the one
+   cookies are signed for and the only one allowed to drive auth. Until they're
+   set the API won't boot at all: `env.ts` refuses to start a half-configured
+   auth server, which is the guardrail, not a crash.
+
+5. **Point the rewrite at the API** — edit the `destination` in `render.yaml` to
+   your **real** API URL, then commit and push. This one is _not_ an MCP call —
+   routes live in the blueprint, so the change ships through git and Render
+   syncs it. That's a feature: your routing config stays reviewable.
+
+6. **Deploy, deliberately** — `render.yaml` sets `autoDeploy: false`, so pushing
+   does **not** ship. Deploy from the dashboard's **Manual Deploy**, or ask
+   Claude to trigger it via the Render MCP and watch until it's live.
+
+   Why off: with autoDeploy on, `git push` _is_ a production deploy — so any
+   agent that can push can ship, and `--no-verify` skips the only gate. This
+   repo's rule is that anything an agent could disable gets enforced somewhere
+   the agent isn't, and a deploy is exactly that kind of thing.
+
+7. **Prove it** — against your **static site's** URL, not the API's:
+
+   ```bash
+   API=https://<your-site>.onrender.com npm run smoke
+   ```
+
+   6/6 green means signup → session → sign-out → sign-in all work in production,
+   through the rewrite, against real Postgres. If `/api/me` returns 404 instead
+   of 401, your step-5 rewrite isn't landing.
+
+8. **Now distrust the green** — ask Claude: _"check my API logs for the
+   better-auth client IP warning."_
+
+   Smoke passes 6/6 whether or not rate limiting works per-client — a collapsed
+   shared bucket still returns a 429, it just trips sooner. **The tests can't see
+   the difference; a log line can.** You should see **no** warning. If you do,
+   your API isn't resolving a client IP and the `/sign-in` limit is shared across
+   all users at once — see `docs/plans/012-prod-deploy-and-mcp.md`.
+
+9. **Operate from the editor** — ask Claude to list deploys, tail logs, or
+   inspect the Neon schema read-only. That's the operate-live-infra story the
+   MCPs exist for — and, per step 8, the part that catches what tests can't.
+
+Free-tier caveat: Render spins the API down after 15 idle minutes; the first
+request after that takes ~30–60s. That's the cold start, not a bug.
 
 ---
 
