@@ -28,9 +28,14 @@ _database_ — a passing typecheck on an app that cannot work. If a query fails 
 
 **Rate limiting behind a proxy shares one bucket.** In dev (Vite proxy) Better
 Auth can't see a client IP, so every client shares a single per-path bucket —
-fine locally, wrong in production. When deploying behind a proxy/LB, set
-`advanced.ipAddress.ipAddressHeaders` (e.g. `x-forwarded-for`) so limits apply
-per client, not to everyone collectively.
+fine locally, wrong in production.
+
+Do **not** "fix" this with `ipAddressHeaders: ['x-forwarded-for']`. That's a
+no-op — it's already the default — and Better Auth trusts a forwarded header
+only when it holds a **single value**, so a multi-hop chain resolves to null no
+matter what you set. Prod uses `cf-connecting-ip` (single-valued, edge-set);
+see `auth.ts` and `docs/plans/012-prod-deploy-and-mcp.md`. Any other host needs
+the same question answered by measurement, not by guessing at header names.
 
 ## Rules
 

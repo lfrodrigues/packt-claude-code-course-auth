@@ -25,7 +25,7 @@
 - **Semble** — code search that returns file:line, not grep-the-world
 - **Playwright** — browser automation / e2e
 - **Sentry** — production errors
-- **Vercel / Cloudflare** — deploy
+- **Render + Neon** — the deployed API, logs, and the prod database
 - Choose per-project. Every tool is context cost.
 
 **Notes / what to do**
@@ -71,7 +71,7 @@
 
 - `.mcp.json` in the repo root → shared with every teammate on clone
 - User-level config → personal tools
-- This repo ships Sentry + Semble configured
+- This repo ships Sentry + Semble + Neon + Render configured
 
 **Notes / what to do**
 
