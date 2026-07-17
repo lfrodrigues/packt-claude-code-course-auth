@@ -90,6 +90,17 @@ export const auth = betterAuth({
   advanced: {
     // Secure cookies over HTTPS in production; plain http in local dev.
     useSecureCookies: env.NODE_ENV === 'production',
+
+    ipAddress: {
+      // Replaces the default `x-forwarded-for`, which arrives with 5 values in
+      // prod (Cloudflare edge + the static site's /api/* rewrite). Better Auth
+      // only trusts a single-valued header, so it returns null and collapses
+      // every client into one shared rate-limit bucket. `cf-connecting-ip` is
+      // set by the edge, single-valued, and can't be forged (403 at the edge).
+      // Absent without Cloudflare (dev/tests) → null → shared bucket, i.e.
+      // throttles too much, never too little. Measured: see docs/plans/012.
+      ipAddressHeaders: ['cf-connecting-ip'],
+    },
   },
 
   // Only these origins may drive the auth endpoints.

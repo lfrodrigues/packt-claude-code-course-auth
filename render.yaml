@@ -1,0 +1,73 @@
+# Render Blueprint — both production services for this repo.
+#
+# Deploy: Render Dashboard → New → Blueprint → pick your fork.
+# Render prompts for every `sync: false` value at creation, so nothing secret
+# is committed here. See README "Deploy to production" for the walkthrough.
+#
+# WHY TWO SERVICES: the static site never sleeps and serves the SPA from a CDN;
+# only the API sleeps on the free plan. The static site's `/api/*` rewrite makes
+# production same-origin, exactly like the Vite proxy does in dev — so session
+# cookies keep working with no SameSite/CORS loosening.
+#
+# TWO-PASS BY NECESSITY: onrender.com subdomains are globally unique, so your
+# service URLs are not knowable until the services exist. Create the blueprint,
+# then fill in the URLs marked below.
+
+services:
+  # ───────────────────────────────────────────────────────────── API (Express)
+  - name: auth-app-api
+    type: web
+    runtime: node
+    plan: free
+    region: oregon # free tier also: frankfurt, singapore, ohio, virginia
+    buildCommand: npm ci --include=dev && npm run build -w @auth-app/api
+    startCommand: npm run start -w @auth-app/api
+    healthCheckPath: /healthz
+    # OFF on purpose. With autoDeploy on, `git push` ships to production — so any
+    # agent that can push can deploy, and `--no-verify` skips the only gate.
+    # Deploying stays a deliberate act: `/deploy` (verify → deploy → smoke), or
+    # the dashboard's Manual Deploy as human break-glass.
+    autoDeploy: false
+    envVars:
+      # `npm ci` omits devDependencies when NODE_ENV=production, which would
+      # strip the TypeScript compiler the build needs — hence `--include=dev`
+      # in buildCommand above. Do not remove one without the other.
+      - key: NODE_ENV
+        value: production
+      # Neon pooled connection string (the `-pooler` host). Prompted at creation.
+      - key: DATABASE_URL
+        sync: false
+      # env.ts enforces a 32-char floor; Render generates a longer value and you
+      # never have to see or store it.
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+      # ↓ BOTH are the STATIC SITE's URL, not this service's URL. Browsers reach
+      # the API through the static site's /api/* rewrite, so that is the origin
+      # cookies are signed for and the only origin allowed to drive auth.
+      - key: BETTER_AUTH_URL
+        sync: false
+      - key: WEB_ORIGIN
+        sync: false
+
+  # ──────────────────────────────────────────────────────── Web (Vite SPA, CDN)
+  - name: auth-app-web
+    type: web
+    runtime: static
+    buildCommand: npm ci --include=dev && npm run build -w @auth-app/web
+    staticPublishPath: apps/web/dist
+    autoDeploy: false # same reasoning as the API service above
+    routes:
+      # Same-origin in prod, like the Vite proxy in dev. Render rewrites accept a
+      # full external URL as a destination.
+      # ↓ REPLACE the host with YOUR api service's real URL after it is created.
+      #   Render appends a random suffix when a name is already taken globally
+      #   (this one became `auth-app-api-lwrx`), so yours will differ. Ask Claude
+      #   to read it back via the Render MCP.
+      - type: rewrite
+        source: /api/*
+        destination: https://auth-app-api-lwrx.onrender.com/api/*
+      # SPA fallback, LAST: react-router owns client-side routes. Render skips
+      # rewrite rules for paths where a real file exists, so assets still serve.
+      - type: rewrite
+        source: /*
+        destination: /index.html
