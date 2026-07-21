@@ -45,10 +45,10 @@
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "knip": "^6.27.0",
-    "lint-staged": "^17.0.8",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.64.0",
+    "lint-staged": "^17.1.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.10"
   }
 }
