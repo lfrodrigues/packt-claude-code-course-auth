@@ -16,7 +16,9 @@
       "mcp__neon__get_database_tables",
       "mcp__render__update_environment_variables",
       "mcp__render__list_deploys",
-      "mcp__render__list_logs"
+      "mcp__render__list_logs",
+      "mcp__render__get_deploy",
+      "mcp__render__get_service"
     ],
     "deny": [
       "Read(./.env)",

@@ -10,20 +10,26 @@ asked.
 
 ## Commands
 
-| Task            | Command               |
-| --------------- | --------------------- |
-| Run everything  | `npm run dev`         |
-| Verify (gate)   | `npm run verify`      |
-| Verify = CI     | `npm run verify:full` |
-| Tests           | `npm test`            |
-| E2E             | `npm run e2e`         |
-| Auth-flow smoke | `npm run smoke`       |
-| Migrate DB      | `npm run db:migrate`  |
+| Task             | Command                 |
+| ---------------- | ----------------------- |
+| Run everything   | `npm run dev`           |
+| Verify (gate)    | `npm run verify`        |
+| Verify = CI      | `npm run verify:full`   |
+| Tests            | `npm test`              |
+| Tests + coverage | `npm run test:coverage` |
+| E2E              | `npm run e2e`           |
+| Auth-flow smoke  | `npm run smoke`         |
+| Migrate DB       | `npm run db:migrate`    |
 
 `npm run verify` (typecheck + lint + format + test + knip + audit) is the fast
 definition of green — the pre-push hook runs exactly this. CI additionally runs
-the Playwright e2e suite and Semgrep, so `npm run verify:full` (verify + e2e +
-semgrep) is what "green in CI" actually means.
+coverage, the Playwright e2e suite and Semgrep, so `npm run verify:full` (verify
+
+- coverage + e2e + semgrep) is what "green in CI" actually means.
+
+Coverage thresholds live in `vitest.config.ts` and are measured floors that
+ratchet upward. **WON'T lower one to make a red build green** — write the test,
+or say plainly in the PR that the number is being restated and why.
 
 ## Layout
 

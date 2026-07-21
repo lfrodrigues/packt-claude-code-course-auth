@@ -13,3 +13,6 @@ test-results/
 jar.txt
 *.tsbuildinfo
 .DS_Store
+
+# Local SQLite code-index cache, written by the CodeAtlas editor extension.
+.codeatlas/

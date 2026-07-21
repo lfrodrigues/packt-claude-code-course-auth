@@ -33,6 +33,22 @@ waits for pre-push, and CI backstops everything. A gate slow enough to be
 annoying gets bypassed with `--no-verify`, and a bypassed gate is worse than
 none — it sells confidence it isn't providing.
 
+Coverage is the third example, and it lives in CI only. The API tests share one
+real database, so they run serialized (`fileParallelism: false`, `maxWorkers: 1`);
+adding v8 instrumentation on top of that lengthens exactly the gate that has to
+stay short to keep being used. `npm test` in `verify` answers "did anything
+break"; `npm run test:coverage` in CI answers "is anything untested" — a question
+that can wait for the slow gate.
+
+The thresholds in `vitest.config.ts` are measured floors that ratchet upward
+(`autoUpdate` writes each rise back into the file), never targets to be lowered
+when a build goes red. They were decorative until CI actually ran coverage — see
+[plans/013-coverage-gate.md](./plans/013-coverage-gate.md), including the
+second-order bug it exposed: the coverage `include` globs were repo-relative
+while each vitest project sets its own `root`, so every file no test imported was
+silently missing from the report. A metric that can only see the code you already
+test will always look healthy.
+
 ## Deny the gates, ask about the boundary
 
 `.claude/settings.json` denies edits to secrets and to the gates themselves
