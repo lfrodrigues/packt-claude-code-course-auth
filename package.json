@@ -10,6 +10,9 @@
     "apps/*",
     "packages/*"
   ],
+  "overrides": {
+    "shell-quote": "^1.10.0"
+  },
   "scripts": {
     "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev -w @auth-app/api",
@@ -23,12 +26,13 @@
     "format:check": "prettier --check .",
     "test": "vitest run --project api --project web",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage --project api --project web",
     "e2e": "playwright test",
     "audit": "npm audit --audit-level=high",
     "knip": "knip",
     "semgrep": "pipx run semgrep scan --error --config p/typescript --config p/expressjs .",
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run knip && npm run audit",
-    "verify:full": "npm run verify && npm run e2e && npm run semgrep",
+    "verify:full": "npm run verify && npm run test:coverage && npm run e2e && npm run semgrep",
     "smoke": "bash scripts/smoke.sh",
     "db:generate": "npm run db:generate -w @auth-app/api",
     "db:migrate": "npm run db:migrate -w @auth-app/api",
