@@ -4,7 +4,7 @@
   "ignoreBinaries": ["pipx"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/*.sh"],
+      "entry": ["scripts/*.sh", "scripts/*.mjs"],
       // vitest.config.ts's `projects` array sets a per-project `root`, so
       // `setupFiles: ['./tests/setup.ts']` resolves correctly for vitest itself
       // (apps/api/tests/setup.ts, apps/web/tests/setup.ts) but knip resolves it

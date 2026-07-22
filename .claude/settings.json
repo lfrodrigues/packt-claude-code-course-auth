@@ -11,6 +11,7 @@
       "Bash(npm run lint:fix)",
       "Bash(npm run e2e)",
       "Bash(npm run smoke)",
+      "Bash(npx vitest *)",
       "Bash(docker compose up -d)",
       "mcp__neon__create_project",
       "mcp__neon__get_database_tables",

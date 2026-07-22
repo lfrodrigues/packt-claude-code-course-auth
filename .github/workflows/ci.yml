@@ -67,7 +67,8 @@ jobs:
       - name: Semgrep
         run: pipx run semgrep scan --error --config p/typescript --config p/expressjs .
       - run: npm run format:check
-      - run: npm test
+      - run: npm run test:coverage
+      - run: npm run deps:sync
       - run: npm run knip
       - run: npm run audit
 
