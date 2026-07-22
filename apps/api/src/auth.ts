@@ -2,13 +2,21 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import type { z } from 'zod';
-import { MIN_PASSWORD_LENGTH, signInSchema, signUpSchema } from '@auth-app/shared';
+import {
+  MIN_PASSWORD_LENGTH,
+  signInSchema,
+  signUpSchema,
+  type SignInInput,
+  type SignUpInput,
+} from '@auth-app/shared';
 import { db, schema } from './db/index.js';
 import { env } from './env.js';
 
 // Better Auth endpoints whose bodies are validated against the shared contract.
 // One entry per endpoint: the hook below looks the schema up by path.
-const bodySchemas: Record<string, z.ZodTypeAny> = {
+// Typed to the real union, not z.ZodTypeAny: in zod 4 that infers output as
+// `unknown`, so spreading `parsed.data` below no longer typechecks.
+const bodySchemas: Record<string, z.ZodType<SignInInput | SignUpInput>> = {
   '/sign-up/email': signUpSchema,
   '/sign-in/email': signInSchema,
 };

@@ -42,16 +42,17 @@ Open http://localhost:5173, create an account, and you're signed in.
 
 ## Scripts
 
-| Command               | What it does                                                                       |
-| --------------------- | ---------------------------------------------------------------------------------- |
-| `npm run dev`         | API + web, together                                                                |
-| `npm run verify`      | **typecheck + lint + format + test + knip + audit** — the fast definition of green |
-| `npm run verify:full` | `verify` + Playwright e2e + Semgrep — exactly what CI runs                         |
-| `npm test`            | Unit/integration (API hits a real test database)                                   |
-| `npm run e2e`         | Playwright, real browser, full login flow                                          |
-| `npm run smoke`       | The curl walkthrough below, scripted, against a running server                     |
-| `npm run db:migrate`  | Apply migrations                                                                   |
-| `npm run db:generate` | Drizzle schema → SQL migration                                                     |
+| Command                 | What it does                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `npm run dev`           | API + web, together                                                                            |
+| `npm run verify`        | **typecheck + lint + format + test + deps:sync + knip + audit** — the fast definition of green |
+| `npm run verify:full`   | `verify` + coverage + Playwright e2e + Semgrep — exactly what CI runs                          |
+| `npm test`              | Unit/integration (API hits a real test database)                                               |
+| `npm run test:coverage` | Same tests with coverage; fails under the thresholds in `vitest.config.ts`                     |
+| `npm run e2e`           | Playwright, real browser, full login flow                                                      |
+| `npm run smoke`         | The curl walkthrough below, scripted, against a running server                                 |
+| `npm run db:migrate`    | Apply migrations                                                                               |
+| `npm run db:generate`   | Drizzle schema → SQL migration                                                                 |
 
 `verify` is what the pre-push hook runs; `verify:full` is what CI runs. One
 definition of green, no drift. (Semgrep fetches its rulesets from the registry,

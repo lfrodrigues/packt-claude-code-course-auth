@@ -10,20 +10,26 @@ asked.
 
 ## Commands
 
-| Task            | Command               |
-| --------------- | --------------------- |
-| Run everything  | `npm run dev`         |
-| Verify (gate)   | `npm run verify`      |
-| Verify = CI     | `npm run verify:full` |
-| Tests           | `npm test`            |
-| E2E             | `npm run e2e`         |
-| Auth-flow smoke | `npm run smoke`       |
-| Migrate DB      | `npm run db:migrate`  |
+| Task             | Command                 |
+| ---------------- | ----------------------- |
+| Run everything   | `npm run dev`           |
+| Verify (gate)    | `npm run verify`        |
+| Verify = CI      | `npm run verify:full`   |
+| Tests            | `npm test`              |
+| Tests + coverage | `npm run test:coverage` |
+| E2E              | `npm run e2e`           |
+| Auth-flow smoke  | `npm run smoke`         |
+| Migrate DB       | `npm run db:migrate`    |
 
-`npm run verify` (typecheck + lint + format + test + knip + audit) is the fast
+`npm run verify` (typecheck + lint + format + test + deps:sync + knip + audit) is the fast
 definition of green — the pre-push hook runs exactly this. CI additionally runs
-the Playwright e2e suite and Semgrep, so `npm run verify:full` (verify + e2e +
-semgrep) is what "green in CI" actually means.
+coverage, the Playwright e2e suite and Semgrep, so `npm run verify:full` (verify
+
+- coverage + e2e + semgrep) is what "green in CI" actually means.
+
+Coverage thresholds live in `vitest.config.ts` and are measured floors that
+ratchet upward. **WON'T lower one to make a red build green** — write the test,
+or say plainly in the PR that the number is being restated and why.
 
 ## Layout
 
@@ -48,6 +54,12 @@ Each of these is phrased so that a violation is visible in a diff.
   are one-way doors.
 - **WON'T commit or push unless explicitly asked.**
 - **WON'T add a dependency without flagging it first**, with a one-line reason.
+- **WON'T bump a shared package in one workspace only.** `zod` and `better-auth`
+  are declared in more than one `package.json`; raise the version in every
+  workspace that declares it, in the same commit. Split versions install two
+  copies, and a zod schema built by one copy does not validate against the other
+  — a runtime failure no type check catches. `npm run deps:sync` enforces this in
+  `verify`; it is not a matter of remembering.
 - **WON'T log secrets.** The logger redacts cookies, auth headers, passwords and
   tokens — do not log around it.
 - **WON'T loosen CORS, cookie flags, or `trustedOrigins` to fix a bug.** If a
