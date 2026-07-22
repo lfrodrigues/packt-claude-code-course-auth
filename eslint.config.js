@@ -46,6 +46,18 @@ export default tseslint.config(
     },
   },
   {
+    // Node CLI scripts. Declaring the two globals by hand rather than pulling in
+    // the `globals` package for a dev-only lint concern.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+    rules: {
+      // These scripts exist to print a result and set an exit code.
+      'no-console': 'off',
+    },
+  },
+  {
     files: ['**/tests/**', '**/e2e/**', '**/*.test.ts', '**/*.test.tsx'],
     rules: {
       'no-console': 'off',

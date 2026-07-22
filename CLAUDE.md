@@ -21,7 +21,7 @@ asked.
 | Auth-flow smoke  | `npm run smoke`         |
 | Migrate DB       | `npm run db:migrate`    |
 
-`npm run verify` (typecheck + lint + format + test + knip + audit) is the fast
+`npm run verify` (typecheck + lint + format + test + deps:sync + knip + audit) is the fast
 definition of green — the pre-push hook runs exactly this. CI additionally runs
 coverage, the Playwright e2e suite and Semgrep, so `npm run verify:full` (verify
 
@@ -54,6 +54,12 @@ Each of these is phrased so that a violation is visible in a diff.
   are one-way doors.
 - **WON'T commit or push unless explicitly asked.**
 - **WON'T add a dependency without flagging it first**, with a one-line reason.
+- **WON'T bump a shared package in one workspace only.** `zod` and `better-auth`
+  are declared in more than one `package.json`; raise the version in every
+  workspace that declares it, in the same commit. Split versions install two
+  copies, and a zod schema built by one copy does not validate against the other
+  — a runtime failure no type check catches. `npm run deps:sync` enforces this in
+  `verify`; it is not a matter of remembering.
 - **WON'T log secrets.** The logger redacts cookies, auth headers, passwords and
   tokens — do not log around it.
 - **WON'T loosen CORS, cookie flags, or `trustedOrigins` to fix a bug.** If a

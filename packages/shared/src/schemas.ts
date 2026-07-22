@@ -12,6 +12,8 @@ import { z } from 'zod';
  */
 export const MIN_PASSWORD_LENGTH = 12;
 
+// Don't migrate to top-level z.email() — it validates before .trim()/
+// .toLowerCase() run, so padded/mixed-case input fails instead of normalizing.
 export const emailSchema = z.string().trim().toLowerCase().email('Enter a valid email address.');
 
 export const passwordSchema = z
@@ -42,7 +44,7 @@ export type SignUpInput = z.infer<typeof signUpSchema>;
 export const demoFormSchema = z.object({
   email: emailSchema,
   amount: z.coerce
-    .number({ invalid_type_error: 'Amount must be a number.' })
+    .number({ error: 'Amount must be a number.' })
     .int('Amount must be a whole number.')
     .min(1, 'Amount must be at least 1.')
     .max(1000, 'Amount must be at most 1000.'),

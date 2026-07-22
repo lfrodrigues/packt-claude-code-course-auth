@@ -29,9 +29,10 @@
     "test:coverage": "vitest run --coverage --project api --project web",
     "e2e": "playwright test",
     "audit": "npm audit --audit-level=high",
+    "deps:sync": "node scripts/check-dep-sync.mjs",
     "knip": "knip",
     "semgrep": "pipx run semgrep scan --error --config p/typescript --config p/expressjs .",
-    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run knip && npm run audit",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run deps:sync && npm run knip && npm run audit",
     "verify:full": "npm run verify && npm run test:coverage && npm run e2e && npm run semgrep",
     "smoke": "bash scripts/smoke.sh",
     "db:generate": "npm run db:generate -w @auth-app/api",
@@ -49,10 +50,11 @@
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "knip": "^6.27.0",
-    "lint-staged": "^17.0.8",
-    "prettier": "^3.4.2",
+    "lint-staged": "^17.1.0",
+    "prettier": "^3.9.6",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.64.0",
+    "typescript-eslint": "^8.65.0",
+    "vite": "^8.1.5",
     "vitest": "^4.1.10"
   }
 }
