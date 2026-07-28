@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@auth-app/shared": "*",
-    "@sentry/node": "^10.67.0",
+    "@sentry/node": "^10.68.0",
     "better-auth": "^1.6.23",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
