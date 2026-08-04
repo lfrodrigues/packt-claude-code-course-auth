@@ -30,7 +30,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
-    "@types/pg": "^8.11.10",
+    "@types/pg": "^8.20.3",
     "@types/supertest": "^7.2.1",
     "drizzle-kit": "^0.31.10",
     "supertest": "^7.0.0",
