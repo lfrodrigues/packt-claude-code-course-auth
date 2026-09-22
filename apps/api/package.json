@@ -34,6 +34,6 @@
     "@types/supertest": "^7.2.1",
     "drizzle-kit": "^0.31.10",
     "supertest": "^7.0.0",
-    "tsx": "^4.19.2"
+    "tsx": "^4.23.13"
   }
 }
